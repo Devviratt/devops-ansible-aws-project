@@ -24,3 +24,11 @@ Control Node → Frontend (Nginx) → Backend (Node.js)
    ansible-playbook -i hosts.ini frontend.yml
    ansible-playbook -i hosts.ini backend.yml
    ansible-playbook -i hosts.ini frontend-proxy.yml
+
+
+## ⚙️ Tech Stack
+AWS EC2, Ansible, Nginx, Node.js
+
+## 🔑 Login
+Username: admin  
+Password: 1234
