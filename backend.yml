@@ -1,0 +1,68 @@
+- name: Configure Backend Servers
+  hosts: backend
+  become: yes
+
+  tasks:
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes
+
+    - name: Install npm
+      apt:
+        name: npm
+        state: present
+
+    - name: Create backend app
+      copy:
+        dest: /home/ubuntu/app.js
+        content: |
+          const http = require('http');
+
+          const server = http.createServer((req, res) => {
+
+            if (req.method === 'POST' && req.url === '/login') {
+              let body = '';
+
+              req.on('data', chunk => {
+                body += chunk.toString();
+              });
+
+              req.on('end', () => {
+                const data = JSON.parse(body);
+
+                if (data.username === 'admin' && data.password === '1234') {
+                  res.writeHead(200, {'Content-Type': 'application/json'});
+                  res.end(JSON.stringify({ message: 'Login Successful' }));
+                } else {
+                  res.writeHead(401, {'Content-Type': 'application/json'});
+                  res.end(JSON.stringify({ message: 'Invalid Credentials' }));
+                }
+              });
+
+            } 
+            
+            else if (req.url === '/status') {
+              res.writeHead(200, {'Content-Type': 'application/json'});
+              res.end(JSON.stringify({
+                frontend: "running",
+                backend: "running"
+              }));
+            }
+
+            else {
+              res.write("Backend Running");
+              res.end();
+            }
+
+          });
+
+          server.listen(3000);
+
+    - name: Kill old app
+      shell: pkill node || true
+
+    - name: Run backend app
+      shell: nohup node /home/ubuntu/app.js &

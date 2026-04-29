@@ -1,0 +1,55 @@
+- name: Configure Frontend Reverse Proxy
+  hosts: frontend
+  become: yes
+
+  tasks:
+    - name: Configure Nginx reverse proxy
+      copy:
+        dest: /etc/nginx/sites-available/default
+        content: |
+          server {
+              listen 80;
+              server_name _;
+
+              # ===== FRONTEND UI =====
+              location / {
+                  root /var/www/html;
+                  index index.html;
+                  try_files $uri /index.html;
+              }
+
+              # ===== LOGIN API =====
+              location /login {
+                  proxy_pass http://15.206.92.254:3000/login;
+
+                  proxy_http_version 1.1;
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection 'upgrade';
+                  proxy_set_header Host $host;
+                  proxy_cache_bypass $http_upgrade;
+              }
+
+              # ===== STATUS API (Dashboard) =====
+              location /status {
+                  proxy_pass http://15.206.92.254:3000/status;
+
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+              }
+
+              # ===== ERROR PAGE =====
+              error_page 500 502 503 504 /50x.html;
+
+              location = /50x.html {
+                  root /var/www/html;
+              }
+
+              # ===== LOGGING =====
+              access_log /var/log/nginx/access.log;
+              error_log /var/log/nginx/error.log;
+          }
+
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted

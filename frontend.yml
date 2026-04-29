@@ -1,0 +1,167 @@
+- name: Configure Frontend Servers
+  hosts: frontend
+  become: yes
+
+  tasks:
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Start Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Deploy Advanced UI
+      copy:
+        dest: /var/www/html/index.html
+        content: |
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>DevOps Dashboard</title>
+
+            <style>
+              body {
+                margin: 0;
+                font-family: 'Segoe UI', sans-serif;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: white;
+              }
+
+              .card {
+                background: rgba(255,255,255,0.1);
+                backdrop-filter: blur(15px);
+                padding: 40px;
+                border-radius: 20px;
+                text-align: center;
+                width: 340px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                animation: fadeIn 0.8s ease;
+              }
+
+              @keyframes fadeIn {
+                from {opacity:0; transform:translateY(20px);}
+                to {opacity:1; transform:translateY(0);}
+              }
+
+              h2 {
+                margin-bottom: 10px;
+              }
+
+              input {
+                width: 90%;
+                padding: 12px;
+                margin: 10px 0;
+                border-radius: 10px;
+                border: none;
+                outline: none;
+              }
+
+              button {
+                width: 100%;
+                padding: 12px;
+                margin-top: 10px;
+                border: none;
+                border-radius: 10px;
+                background: linear-gradient(90deg,#00c6ff,#0072ff);
+                color: white;
+                font-weight: bold;
+                cursor: pointer;
+                transition: 0.3s;
+              }
+
+              button:hover {
+                transform: scale(1.05);
+              }
+
+              #result {
+                margin-top: 10px;
+                font-weight: bold;
+              }
+
+              .status {
+                margin-top: 15px;
+              }
+
+              .badge {
+                padding: 5px 10px;
+                border-radius: 8px;
+                background: green;
+                font-size: 12px;
+              }
+
+            </style>
+          </head>
+
+          <body>
+
+            <div class="card" id="app">
+              <h2>🚀 DevOps Login</h2>
+              <p>Multi-Tier AWS System</p>
+
+              <input id="username" placeholder="Username">
+              <input id="password" type="password" placeholder="Password">
+
+              <button onclick="login()">Login</button>
+
+              <p id="result"></p>
+            </div>
+
+            <script>
+
+              function login() {
+                document.getElementById("result").innerText = "Checking...";
+                
+                fetch('/login', {
+                  method:'POST',
+                  headers:{'Content-Type':'application/json'},
+                  body:JSON.stringify({
+                    username:username.value,
+                    password:password.value
+                  })
+                })
+                .then(res=>res.json())
+                .then(data=>{
+                  if(data.message==="Login Successful"){
+                    loadDashboard();
+                  } else {
+                    result.innerText = data.message;
+                    result.style.color = "red";
+                  }
+                });
+              }
+
+              function loadDashboard(){
+                fetch('/status')
+                .then(res=>res.json())
+                .then(data=>{
+                  document.getElementById("app").innerHTML = `
+                    <h2>🚀 Dashboard</h2>
+
+                    <div class="status">
+                      <p>Frontend: <span class="badge">${data.frontend}</span></p>
+                      <p>Backend: <span class="badge">${data.backend}</span></p>
+                    </div>
+
+                    <p style="margin-top:15px;">Architecture:</p>
+                    <p>User → Nginx → Node.js</p>
+
+                    <button onclick="location.reload()">Logout</button>
+                  `;
+                });
+              }
+
+            </script>
+
+          </body>
+          </html>
